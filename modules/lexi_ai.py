@@ -6,13 +6,12 @@ import time
 
 def configure_ai():
     try:
+        # Lấy API Key từ file secrets.toml
         api_key = st.secrets["GENAI_API_KEY"]
         genai.configure(api_key=api_key)
         
-        # Quét danh sách model khả dụng
+        # Kiểm tra và chọn model mạnh nhất hiện tại cho text
         models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Ưu tiên gemini-1.5-flash, nếu không có thì lấy cái đầu tiên
         for m in models:
             if 'gemini-1.5-flash' in m:
                 return genai.GenerativeModel(m)
@@ -21,7 +20,7 @@ def configure_ai():
         return None
 
 def extract_json(text):
-    # Dùng Regex để lấy nội dung JSON từ phản hồi của AI
+    # Dùng Regex để tách khối JSON ra khỏi các đoạn text thừa (nếu có)
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:
@@ -31,58 +30,43 @@ def extract_json(text):
     return None
 
 def get_word_info(word):
-    """Lấy thông tin chi tiết của từ vựng"""
     model = configure_ai()
+    if not model: return {"error": "Lỗi cấu hình AI (API Key chưa đúng)"}
+
+    # Prompt được tối ưu để AI trả về đúng định dạng ô lưới song ngữ
     prompt = f"""
-    You are a Band 9 IELTS expert. Analyze the word "{word}".
-    Return ONLY JSON:
+    You are an IELTS Band 9 Expert. Analyze the word: "{word}".
+    Return ONLY JSON with this format:
     {{
-     "phonetic":"",
-     "word_class":"",
-     "band_level":"",
-     "definition_en":"",
-     "definition_vi":"",
-     "nuance":"",
-     "collocations":[],
-     "idioms":[],
-     "word_family":[],
-     "examples":[]
-     "synonyms":[]"
-     "antonyms":[]"
-    }} Giải thích ý nghĩa ngắn gọn bằng tiếng việt ở phần "definition_vi" và giải thích chi tiết hơn ở phần "nuance". 
-    Nếu không có thông tin nào, trả về chuỗi rỗng hoặc mảng rỗng.nếu không có idioms hoặc collocations,synonyms,antonyms thì trả về mảng rỗng.
-    Nếu không có band level thì trả về chuỗi rỗng.
-    Trình bày logic dễ nhìn để người dùng dễ hiểu.
-    Trả về kết quả càng chi tiết càng tốt, đặc biệt là phần "nuance" và "examples".
-    No explanation outside JSON.
+     "phonetic": "ipa",
+     "word_class": "noun/verb...",
+     "definition_en": "concise english definition",
+     "definition_vi": "nghĩa tiếng Việt ngắn gọn",
+     "ratings": {{"reading": 4, "listening": 3, "writing": 5, "speaking": 4, "life": 5}},
+     "collocations": ["english colocation : nghĩa tiếng Việt"],
+     "idioms": ["english idiom : nghĩa tiếng Việt"],
+     "word_forms": {{
+        "noun": "word : nghĩa",
+        "verb": "word : nghĩa",
+        "adj": "word : nghĩa",
+        "adv": "word : nghĩa"
+     }},
+     "examples": ["english sentence : nghĩa tiếng Việt"],
+     "synonyms": ["word : nghĩa"],
+     "antonyms": ["word : nghĩa"],
+     "nuance": "giải thích chi tiết sắc thái và cách dùng từ này trong IELTS bằng tiếng Việt"
+    }}
+    IMPORTANT: Every array/object value MUST follow "English : Vietnamese" format.
+    Return NO text other than JSON.
     """
+    
+    # Cơ chế thử lại 2 lần nếu AI trả về lỗi định dạng
     for _ in range(2):
         try:
             res = model.generate_content(prompt)
             data = extract_json(res.text)
             if data: return data
-        except Exception as e:
+        except Exception:
             time.sleep(1)
-    return {"error": "AI không phản hồi hoặc hết lượt dùng (Rate Limit)."}
-
-def evaluate_sentence(word, sentence):
-    """Chấm điểm câu viết của người dùng (tính năng mở rộng)"""
-    model = configure_ai()
-    prompt = f"""
-    You are a strict IELTS examiner. Evaluate this sentence focus on word "{word}": "{sentence}"
-    Return ONLY JSON:
-    {{
-     "is_correct": true,
-     "estimated_band":"",
-     "lexical_resource_feedback":"",
-     "grammar_feedback":"",
-     "improved_version":"",
-     "explanation_vi":""
-    }}
-    """
-    try:
-        res = model.generate_content(prompt)
-        data = extract_json(res.text)
-        return data if data else {"error": "Lỗi định dạng AI."}
-    except:
-        return {"error": "AI không thể đánh giá câu này."}
+            
+    return {"error": "Lexi đang bận một chút, em nhấn tìm lại lần nữa nhé!"}
