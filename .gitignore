@@ -1,0 +1,12 @@
+# Chặn file chứa API Key
+.streamlit/secrets.toml
+
+# Chặn các file rác của Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Chặn database cục bộ (nếu các em không muốn đưa dữ liệu cá nhân lên)
+*.db
