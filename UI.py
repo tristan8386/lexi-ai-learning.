@@ -5,8 +5,8 @@ from datetime import datetime, date
 from gtts import gTTS
 from modules.lexi_ai import get_word_info
 import baitap
-
-
+import reading_ai
+import writing_ai
 # ================= 1. CẤU HÌNH & STYLE =================
 st.set_page_config(page_title="Lexi AI - Super Hero", layout="wide")
 
@@ -42,7 +42,7 @@ if "start_time" not in st.session_state: st.session_state.start_time = datetime.
 if "quiz_data" not in st.session_state: st.session_state.quiz_data = None
 if "current_quiz" not in st.session_state: st.session_state.current_quiz = None
 if "xp" not in st.session_state: st.session_state.xp = 0
-
+if "current_card" not in st.session_state: st.session_state.current_card = None
 word_count = len(st.session_state.word_bank)
 
 # Xếp hạng dựa trên số lượng từ đã lưu
@@ -121,7 +121,7 @@ if page == "🔍 Tra từ":
                 with t1:
                     cols = st.columns(2)
                     for i, it in enumerate(data.get('collocations', [])):
-                        en, vi = it.split(":", 1) if ":" in it else (it, "")
+                        en, vi = it.split(":", 4) if ":" in it else (it, "")
                         cols[i%2].markdown(f'<div class="info-item"><b>{en}</b><br><small>{vi}</small></div>', unsafe_allow_html=True)
                 with t3:
                     wf = data.get('word_forms', {})
@@ -129,38 +129,52 @@ if page == "🔍 Tra từ":
                     types = [("Noun", "noun", "#2563EB"), ("Verb", "verb", "#DC2626"), ("Adj", "adj", "#EA580C"), ("Adv", "adv", "#7C3AED")]
                     for i, (lab, key, color) in enumerate(types):
                         val = wf.get(key, "- : -")
-                        en_f, vi_f = val.split(":", 1) if ":" in val else (val, "-")
+                        en_f, vi_f = val.split(":", 4) if ":" in val else (val, "-")
                         wf_cols[i].markdown(f'<div style="border-top:3px solid {color}; padding:8px; background:#F8FAFC; border-radius:10px; text-align:center;"><small style="color:{color}; font-weight:bold;">{lab}</small><br><b>{en_f}</b><br><small>{vi_f}</small></div>', unsafe_allow_html=True)
                 with t4:
                     st.info(f"💡 Sắc thái: {data.get('nuance')}")
                     for ex in data.get('examples', []):
                         st.write(f"🔹 {ex}")
 
-                if st.button("💾 Lưu từ & Tăng Streak"):
-                    if word_input not in st.session_state.word_bank:
-                        st.session_state.word_bank.append(word_input)
-                        update_streak()
-                        st.balloons()
-                        st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("👆 Nhập một từ vựng bất kỳ ở trên để bắt đầu khám phá!")
-            st.image("https://img.freepik.com/free-vector/creative-thinking-concept-illustration_114360-3851.jpg", width=500)
+            
+                    # NÚT BẤM LƯU TỪ VÀ TĂNG STREAK
+                    if st.button("💾 Lưu từ & Tăng Streak"):
+                        # 1. Lọc danh sách tên các từ đã lưu (dạng dictionary)
+                        existing_words = [w['word'] for w in st.session_state.word_bank if isinstance(w, dict)]
+                        
+                        # 2. Kiểm tra nếu từ chưa tồn tại thì mới lưu
+                        if word_input not in existing_words:
+                            new_word = {
+                                "word": word_input,
+                                "phonetic": data.get('phonetic', 'N/A'),
+                                "definition_vi": data.get('definition_vi', 'Chưa có dịch'),
+                                "word_class": data.get('word_class', 'n/a'),
+                                "definition_en": data.get('definition_en', '')
+                            }
+                            st.session_state.word_bank.append(new_word)
+                            update_streak()
+                            st.balloons()
+                            st.rerun()
+                        else:
+                            st.warning("Từ này đã có trong kho báu của Siêu nhân rồi!")
+
+                    st.markdown('</div>', unsafe_allow_html=True)
 
     with side_col:
         st.markdown('<div class="side-card"><h5>💡 IELTS Tip</h5>' + random.choice(TIPS) + '</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="side-card"><h5>📊 Thống kê</h5>• Từ đã lưu: <b>{word_count}</b><br>• Cấp độ: <b>{"Grit Newbie" if word_count < 20 else "Grit Warrior"}</b></div>', unsafe_allow_html=True)
         if st.session_state.word_bank:
-            st.markdown('<div class="side-card"><h5>🕒 Vừa lưu</h5>' + "".join([f'<span class="recent-tag">{w}</span>' for w in st.session_state.word_bank[-6:]]) + '</div>', unsafe_allow_html=True)
-
+           #Thêm ["word"] để chỉ lấy tên từ
+            tags = "".join([f'<span class="recent-tag">{w["word"]}</span>' for w in st.session_state.word_bank[-6:] if isinstance(w, dict)])
+            st.markdown(f'<div class="side-card"><h5>🕒 Vừa lưu</h5>{tags}</div>', unsafe_allow_html=True)
 elif page == "🧠 Quiz":
-    if word_count < 4:
-        st.markdown(f'<div class="locked-box"><h1 style="font-size:80px;">⚠️</h1><h2>CHƯA ĐỦ TỪ ĐỂ TẠO BÀI TẬP</h2><p>Cần thêm <b>{4-word_count}</b> từ nữa để mở Quiz.</p></div>', unsafe_allow_html=True)
+    if word_count < 1:
+        st.markdown(f'<div class="locked-box"><h1 style="font-size:80px;">⚠️</h1><h2>CHƯA ĐỦ TỪ ĐỂ TẠO BÀI TẬP</h2><p>Cần thêm <b>{1-word_count}</b> từ nữa để mở Quiz.</p></div>', unsafe_allow_html=True)
     else:
         # Thanh tiến độ XP trong trang ôn tập
         st.markdown("##### ⚡ Năng lượng học tập (XP)")
         st.progress(min(st.session_state.xp / 500, 1.0))
-        
+        # Ôn tập: Flashcard, Trắc nghiệm, Đúng/Sai
         tab1, tab2, tab3 = st.tabs(["🎴 Flashcard", "🎯 Trắc nghiệm", "⚡ Đúng/Sai"])
 
         with tab1:
@@ -170,11 +184,10 @@ elif page == "🧠 Quiz":
             card = st.session_state.current_card
             st.markdown(f"""
             <div style="background: white; padding: 50px; border-radius: 20px; border: 3px solid #FFB300; text-align: center;">
-                <h1 style="font-size: 60px; margin:0;">{card['word'].upper()}</h1>
-                <p style="color: gray;">{card['phonetic']}</p>
+                <h1 style="font-size: 60px; margin:0;">{card.get('word', '???').upper()}</h1>
+                <p style="color: gray;">{card.get('phonetic', 'N/A')}</p>
             </div>
-            """, unsafe_allow_html=True)
-            
+         """, unsafe_allow_html=True)
             with st.expander("👉 NHẤN ĐỂ LẬT THẺ (XEM NGHĨA)"):
                 st.markdown(f"### {card['definition_vi']}")
                 if st.button("✅ Đã thuộc từ này (+5 XP)"):
@@ -217,14 +230,17 @@ elif page == "📖 Reading":
     if word_count < 20:
         st.markdown(f'<div class="locked-box"><h1 style="font-size:80px;">🔒</h1><h2>TÍNH NĂNG CHƯA KÍCH HOẠT</h2><p>Cần thêm <b>{20-word_count}</b> từ nữa để mở Reading.</p></div>', unsafe_allow_html=True)
     else:
-        st.success("✅ Bạn đã đủ Grit! Bắt đầu luyện Reading thôi.")
-elif page == "✍️ Writing":
+        reading_ai.ReadingAI.render_ui()
+elif page == "✍️ Writing":     
     if word_count < 40:
         st.markdown(f'<div class="locked-box"><h1 style="font-size:80px;">🛡️</h1><h2>TÍNH NĂNG CHƯA KÍCH HOẠT</h2><p>Cần thêm <b>{40-word_count}</b> từ nữa để mở Writing.</p></div>', unsafe_allow_html=True)
     else:
         st.success("✅ Bạn đã đủ Grit! Bắt đầu luyện Writing thôi.")
+        writing_ai.WritingAI.render_ui()
 elif page == "🌐Interpreter":
     if word_count < 80:
         st.markdown(f'<div class="locked-box"><h1 style="font-size:80px;">🌐</h1><h2>TÍNH NĂNG CHƯA KÍCH HOẠT</h2><p>Cần thêm <b>{80-word_count}</b> từ nữa để mở Interpreter.</p></div>', unsafe_allow_html=True)
-    else:
-        st.success("✅ Bạn đã đủ Grit! Bắt đầu luyện tập về việc dịch thuật thôi.")
+    else:        
+        st.success("✅ Bạn đã đủ Grit! Bắt đầu luyện Phiên dịch thôi.")
+        import inter_ai
+        inter_ai.InterpreterAI.render_ui()
