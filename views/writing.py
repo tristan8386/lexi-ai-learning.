@@ -1,18 +1,55 @@
 import streamlit as st
-import google.generativeai as genai
 import random
 from datetime import datetime
+from modules.ai_handler import configure_ai
 
 class WritingAI:
     @staticmethod
     def generate_task(word_bank):
         seeds = random.sample([w['word'] for w in word_bank], min(len(word_bank), 5))
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = configure_ai()
+        if not model: return "Lỗi AI!"
         prompt = f"Role: IELTS Examiner. Task: Create an IELTS Writing Task 2 prompt about: {seeds}. English only."
         return model.generate_content(prompt).text
 
     @staticmethod
     def render_ui():
+        st.markdown("""
+        <style>
+            .stApp {
+                background: radial-gradient(circle at top left, #0F172A, #1E293B);
+                color: #F8FAFC;
+            }
+            h1, h2, h3, h5, p, span, small, b { color: #F1F5F9 !important; }
+            .stTextArea textarea {
+                background-color: #FFFFFF !important;
+                color: #000000 !important;
+                border: 2px solid #3B82F6 !important;
+                border-radius: 15px !important;
+                font-size: 16px !important;
+                line-height: 1.6 !important;
+                padding: 15px !important;
+            }
+            .stTextArea textarea:focus {
+                border-color: #3B82F6 !important;
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+            }
+            .stButton>button {
+                background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 10px !important;
+                padding: 10px 20px !important;
+                font-weight: 600 !important;
+            }
+            .stInfo {
+                background-color: rgba(59, 130, 246, 0.1) !important;
+                color: #93C5FD !important;
+                border: 1px solid rgba(59, 130, 246, 0.2) !important;
+                border-radius: 15px !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
         st.title("✍️ IELTS Writing Expert")
         
         if "current_task" not in st.session_state:
@@ -27,7 +64,10 @@ class WritingAI:
         
         if st.button("🚀 Chấm điểm & Nâng cấp"):
             with st.spinner("Đang phân tích đa tầng..."):
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = configure_ai()
+                if not model:
+                    st.error("Lỗi AI!")
+                    return
                 prompt = f"""
                 Bạn là giám khảo IELTS. Hãy phân tích bài viết này:
                 ĐỀ BÀI: {st.session_state.current_task}
