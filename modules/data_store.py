@@ -118,4 +118,4 @@ all_cards = [
     {"word": "tabloid", "phonetic": "/ˈtæblɔɪd/", "meaning": "báo lá cải", "example": "Tabloids spread rumors.", "topic": "media"},
     {"word": "coverage", "phonetic": "/ˈkʌvərɪdʒ/", "meaning": "sự đưa tin", "example": "Fair media coverage.", "topic": "media"},
     {"word": "editorial", "phonetic": "/ˌedɪˈtɔːriəl/", "meaning": "bài biên tập", "example": "An insightful editorial.", "topic": "media"}
-]
+    ]

@@ -3,7 +3,7 @@ import random
 import base64
 from modules.db_handler import insert_all_cards, get_cards_by_topic, save_word, get_all_saved_words
 from modules.ai_handler import get_word_info, speak
-from views import speaking, notebook, reading, writing
+from views import speaking, notebook, reading, writing, coaching
 
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
@@ -65,7 +65,7 @@ with st.sidebar:
     
     st.divider()
     page = st.radio("Chọn kỹ năng:", 
-                    ["🔍 Học từ mới", "📚 Chủ đề", "🗣️ Speaking", "📒 Sổ tay", "🎓 Ôn tập", "📖 Reading", "🪶 Writing"])
+                    ["🔍 Học từ mới", "📚 Chủ đề", "🗣️ Speaking", "📒 Sổ tay", "🎓 Ôn tập", "📖 Reading", "✍️ Writing", "🧠 Coaching"])
 
 # ================= 3. HEADER =================
 st.markdown(f"""
@@ -257,8 +257,11 @@ elif page == "📒 Sổ tay":
 elif page == "📖 Reading":
     reading.ReadingAI.render_ui()
 
-elif page == "🪶 Writing":
+elif page == "✍️ Writing":
     writing.WritingAI.render_ui()
+
+elif page == "🧠 Coaching":    
+    coaching.CoachingAI.render_ui()
 
 elif page == "🎓 Ôn tập":
     st.subheader("🎯 Đấu trường Ôn tập")
