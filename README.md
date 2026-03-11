@@ -10,8 +10,9 @@ Lexi AI is a premium, AI-powered English learning application built with Streaml
 - **📚 Topic-Based Learning**: High-quality flashcards categorized by IELTS topics (Environment, Technology, Education, etc.).
 - **🗣️ Speaking AI**: Mock speaking tests with real-time feedback on fluency, vocabulary, grammar, and pronunciation. Includes audio support via gTTS.
 - **📖 IELTS Reading Simulator**: Generates academic reading passages and comprehension quizzes on-demand using AI.
-- **🪶 Writing Practice**: AI-driven evaluation of writing tasks with band score estimates and improvement suggestions.
+- **✍️ Writing**: AI-driven evaluation of writing tasks with band score estimates and improvement suggestions.
 - **📒 Digital Notebook**: Save and organize new vocabulary into a personal word bank for long-term retention.
+- **🧠 Coaching**: An AI-powered assistant that provides guidance an feedback to help users improve their English learning.
 - **🎯 Revision Arena**: Gamified review sessions to test your knowledge and track progress with XP.
 
 ## 🛠️ Tech Stack
@@ -71,4 +72,5 @@ Lexi AI is a premium, AI-powered English learning application built with Streaml
 
 ---
 Developed with ❤️ by [Tristan](https://github.com/tristan8386)
+
 
