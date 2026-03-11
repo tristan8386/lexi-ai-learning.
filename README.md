@@ -71,3 +71,4 @@ Lexi AI is a premium, AI-powered English learning application built with Streaml
 
 ---
 Developed with ❤️ by [Tristan](https://github.com/tristan8386)
+
